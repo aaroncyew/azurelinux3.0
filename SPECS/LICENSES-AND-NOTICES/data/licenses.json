@@ -2292,6 +2292,7 @@
                 "blobfuse",
                 "bmon",
                 "bpftrace",
+                "cassandra-cpp-driver",
                 "ccache",
                 "cert-manager",
                 "clamav",
