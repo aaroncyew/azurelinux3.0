@@ -2317,6 +2317,7 @@
                 "plexus-utils",
                 "psl-make-dafsa",
                 "publicsuffix",
+                "python-apache-libcloud",
                 "qdox",
                 "regexp",
                 "relaxngDatatype",
