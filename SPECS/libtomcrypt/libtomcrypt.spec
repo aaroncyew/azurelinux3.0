@@ -1,7 +1,7 @@
 Summary:        A comprehensive, portable cryptographic toolkit
 Name:           libtomcrypt
 Version:        1.18.2
-Release:        8%{?dist}
+Release:        9%{?dist}
 License:        Public Domain OR WTFPL
 Vendor:         Microsoft Corporation
 Distribution:   Mariner
@@ -33,7 +33,7 @@ developing applications that use %{name}.
 %setup -q
 
 %build
-%set_build_flags
+%{set_build_flags}
 export PREFIX="%{_prefix}"
 export INCPATH="%{_includedir}"
 export LIBPATH="%{_libdir}"
@@ -70,6 +70,9 @@ sed -i \
 %{_libdir}/pkgconfig/*.pc
 
 %changelog
+* Mon Jul 25 2022 Sumedh Sharma <sumsharma@microsoft.com> - 1.18.2-9
+- Move to SPECS folder.
+
 * Fri Feb 04 2022 Pawel Winogrodzki <pawelwi@microsoft.com> - 1.18.2-8
 - Removing docs to drop dependency on 'ghostscript'.
 - License verified.
