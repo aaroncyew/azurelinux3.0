@@ -1,3 +1,15 @@
+Summary:        Go
+Name:           golang
+Version:        1.19.6
+Release:        1%{?dist}
+License:        BSD-3-Clause
+Vendor:         Microsoft Corporation
+Distribution:   Mariner
+Group:          System Environment/Security
+URL:            https://golang.org
+Source0:        https://golang.org/dl/go%{version}.src.tar.gz
+Source1:        https://dl.google.com/go/go1.4-bootstrap-20171003.tar.gz
+Patch0:         go14_bootstrap_aarch64.patch
 %global goroot          %{_libdir}/golang
 %global gopath          %{_datadir}/gocode
 %ifarch aarch64
@@ -10,18 +22,6 @@
 # rpmbuild magic to keep from having meta dependency on libc.so.6
 %define _use_internal_dependency_generator 0
 %define __find_requires %{nil}
-Summary:        Go
-Name:           golang
-Version:        1.19.5
-Release:        1%{?dist}
-License:        BSD-3-Clause
-Vendor:         Microsoft Corporation
-Distribution:   Mariner
-Group:          System Environment/Security
-URL:            https://golang.org
-Source0:        https://golang.org/dl/go%{version}.src.tar.gz
-Source1:        https://dl.google.com/go/go1.4-bootstrap-20171003.tar.gz
-Patch0:         go14_bootstrap_aarch64.patch
 Obsoletes:      %{name} < %{version}
 Provides:       %{name} = %{version}
 Provides:       go = %{version}-%{release}
@@ -117,6 +117,9 @@ fi
 %{_bindir}/*
 
 %changelog
+* Tue Mar 14 2023 Rakshaa Viswanathan <rviswanathan@microsoft.com> - 1.19.6-1
+- Upgrade to 1.19.6 (fixes CVE-2022-41722, CVE-2022-41724, CVE-2022-41725, CVE-2022-41723)
+
 * Fri Feb 03 2023 CBL-Mariner Servicing Account <cblmargh@microsoft.com> - 1.19.5-1
 - Auto-upgrade to 1.19.5 - upgrade to latest
 
