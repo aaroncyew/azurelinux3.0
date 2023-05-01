@@ -321,10 +321,13 @@ func DetachLoopbackDevice(diskDevPath string) (err error) {
 }
 
 // CreatePartitions creates partitions on the specified disk according to the disk config
-func CreatePartitions(diskDevPath string, disk configuration.Disk, rootEncryption configuration.RootEncryption, readOnlyRootConfig configuration.ReadOnlyVerityRoot) (partDevPathMap map[string]string, partIDToFsTypeMap map[string]string, encryptedRoot EncryptedRootDevice, readOnlyRoot VerityDevice, err error) {
+// encryptedRoot and readOnlyRoot are pointers and will be nil if the disk config does not specify encryption or read-only roots.
+func CreatePartitions(diskDevPath string, disk configuration.Disk, rootEncryption configuration.RootEncryption, readOnlyRootConfig configuration.ReadOnlyVerityRoot) (partDevPathMap map[string]string, partIDToFsTypeMap map[string]string, encryptedRoot *EncryptedRootDevice, readOnlyRoot *VerityDevice, err error) {
 	const timeoutInSeconds = "5"
 	partDevPathMap = make(map[string]string)
 	partIDToFsTypeMap = make(map[string]string)
+	encryptedRoot = nil
+	readOnlyRoot = nil
 
 	// Clear any old partition table info to prevent errors during partition creation
 	_, stderr, err := shell.Execute("sfdisk", "--delete", diskDevPath)
@@ -338,12 +341,12 @@ func CreatePartitions(diskDevPath string, disk configuration.Disk, rootEncryptio
 	partedArgument, err := partitionTableType.ConvertToPartedArgument()
 	if err != nil {
 		logger.Log.Errorf("Unable to convert partition table type (%v) to parted argument", partitionTableType)
-		return
+		return partDevPathMap, partIDToFsTypeMap, encryptedRoot, readOnlyRoot, err
 	}
 	_, stderr, err = shell.Execute("flock", "--timeout", timeoutInSeconds, diskDevPath, "parted", diskDevPath, "--script", "mklabel", partedArgument)
 	if err != nil {
 		logger.Log.Warnf("Failed to set partition table type using parted: %v", stderr)
-		return
+		return partDevPathMap, partIDToFsTypeMap, encryptedRoot, readOnlyRoot, err
 	}
 
 	usingExtendedPartition := (len(disk.Partitions) > maxPrimaryPartitionsForMBR) && (partitionTableType == configuration.PartitionTableTypeMbr)
@@ -355,7 +358,7 @@ func CreatePartitions(diskDevPath string, disk configuration.Disk, rootEncryptio
 		if partType == extendedPartitionType {
 			err = createExtendedPartition(diskDevPath, partitionTableType.String(), disk.Partitions, partIDToFsTypeMap, partDevPathMap)
 			if err != nil {
-				return
+				return partDevPathMap, partIDToFsTypeMap, encryptedRoot, readOnlyRoot, err
 			}
 
 			// Update partType and partitionNumber
@@ -376,19 +379,21 @@ func CreatePartitions(diskDevPath string, disk configuration.Disk, rootEncryptio
 		}
 
 		if rootEncryption.Enable && partition.HasFlag(configuration.PartitionFlagDeviceMapperRoot) {
-			encryptedRoot, err = encryptRootPartition(partDevPath, partition, rootEncryption)
+			newEncryptedRootPtr, err := encryptRootPartition(partDevPath, partition, rootEncryption)
 			if err != nil {
 				logger.Log.Warnf("Failed to initialize encrypted root")
 				return partDevPathMap, partIDToFsTypeMap, encryptedRoot, readOnlyRoot, err
 			}
 			partDevPathMap[partition.ID] = GetEncryptedRootVolMapping()
+			encryptedRoot = &newEncryptedRootPtr
 		} else if readOnlyRootConfig.Enable && partition.HasFlag(configuration.PartitionFlagDeviceMapperRoot) {
-			readOnlyRoot, err = PrepReadOnlyDevice(partDevPath, partition, readOnlyRootConfig)
+			newReadOnlyRootPtr, err := PrepReadOnlyDevice(partDevPath, partition, readOnlyRootConfig)
 			if err != nil {
-				logger.Log.Warnf("Failed to initialize read only root")
+				err = fmt.Errorf("failed to initialize read only root: %w", err)
 				return partDevPathMap, partIDToFsTypeMap, encryptedRoot, readOnlyRoot, err
 			}
-			partDevPathMap[partition.ID] = readOnlyRoot.MappedDevice
+			partDevPathMap[partition.ID] = newReadOnlyRootPtr.MappedDevice
+			readOnlyRoot = &newReadOnlyRootPtr
 		} else {
 			partDevPathMap[partition.ID] = partDevPath
 		}

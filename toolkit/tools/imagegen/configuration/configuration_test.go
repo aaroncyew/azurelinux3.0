@@ -213,6 +213,23 @@ func TestShouldFailDuplicatedIDs(t *testing.T) {
 	assert.Equal(t, "failed to parse [Config]: invalid [Config]: a [Partition] on a [Disk] '0' shares an ID 'duplicatedID' with another partition (on disk '1')", err.Error())
 }
 
+func TestShouldFailDuplicateArtifacts(t *testing.T) {
+	var checkedConfig Config
+	testConfig := expectedConfiguration
+
+	// Copy the disks, then add some duplicate artifacts
+	testConfig.Disks = append([]Disk{}, expectedConfiguration.Disks...)
+	testConfig.Disks[0].Artifacts = append(testConfig.Disks[0].Artifacts, testConfig.Disks[0].Artifacts[0])
+
+	err := testConfig.IsValid()
+	assert.Error(t, err)
+	assert.Equal(t, "invalid [Config]: [Disk] '0' has an [Artifact] with a duplicate name 'CompressedVHD' and type 'vhd'", err.Error())
+
+	err = remarshalJSON(testConfig, &checkedConfig)
+	assert.Error(t, err)
+	assert.Equal(t, "failed to parse [Config]: invalid [Config]: [Disk] '0' has an [Artifact] with a duplicate name 'CompressedVHD' and type 'vhd'", err.Error())
+}
+
 func TestShouldFailMissingPartition(t *testing.T) {
 	var checkedConfig Config
 	testConfig := expectedConfiguration
@@ -281,6 +298,7 @@ func TestShouldSucceedReturnPartitionIndexAndObjectForBootPartition(t *testing.T
 var expectedConfiguration Config = Config{
 	Disks: []Disk{
 		{
+			ID:                 "disk1",
 			PartitionTableType: "gpt",
 			MaxSize:            uint64(1024),
 			TargetDisk: TargetDisk{
@@ -333,6 +351,7 @@ var expectedConfiguration Config = Config{
 			},
 		},
 		{
+			ID:                 "disk2",
 			PartitionTableType: "mbr",
 			MaxSize:            uint64(4096),
 			TargetDisk: TargetDisk{
@@ -385,8 +404,9 @@ var expectedConfiguration Config = Config{
 	},
 	SystemConfigs: []SystemConfig{
 		{
-			Name:      "SmallerDisk",
-			IsDefault: true,
+			Name:        "SmallerDisk",
+			IsDefault:   true,
+			PrimaryDisk: "disk1",
 			PartitionSettings: []PartitionSetting{
 				{
 					ID:              "MyBoot",
