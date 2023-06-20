@@ -18,13 +18,14 @@
 Summary:        Container native virtualization
 Name:           containerized-data-importer
 Version:        1.55.0
-Release:        10%{?dist}
+Release:        11%{?dist}
 License:        ASL 2.0
 Vendor:         Microsoft Corporation
 Distribution:   Mariner
 Group:          System/Packages
 URL:            https://github.com/kubevirt/containerized-data-importer
 Source0:        https://github.com/kubevirt/containerized-data-importer/archive/refs/tags/v%{version}.tar.gz#/%{name}-%{version}.tar.gz
+Patch0:         allow-dynamic-build.patch
 BuildRequires:  golang
 BuildRequires:  golang-packaging
 BuildRequires:  libnbd-devel
@@ -125,6 +126,10 @@ CDI_GIT_TREE_STATE="clean" \
 	cmd/cdi-uploadproxy \
 	cmd/cdi-uploadserver \
 	cmd/cdi-operator \
+	tools/cdi-containerimage-server \
+	tools/cdi-image-size-detection \
+	tools/cdi-source-update-poller \
+	tools/csv-generator \
 	%{nil}
 
 ./hack/build/build-manifests.sh
@@ -132,20 +137,29 @@ CDI_GIT_TREE_STATE="clean" \
 %install
 mkdir -p %{buildroot}%{_bindir}
 
-install -p -m 0755 _out/cmd/cdi-apiserver/cdi-apiserver %{buildroot}%{_bindir}/virt-cdi-apiserver
+install -p -m 0755 _out/cmd/cdi-apiserver/cdi-apiserver %{buildroot}%{_bindir}/cdi-apiserver
 
 install -p -m 0755 cmd/cdi-cloner/cloner_startup.sh %{buildroot}%{_bindir}/
+
 install -p -m 0755 _out/cmd/cdi-cloner/cdi-cloner %{buildroot}%{_bindir}/
 
-install -p -m 0755 _out/cmd/cdi-controller/cdi-controller %{buildroot}%{_bindir}/virt-cdi-controller
+install -p -m 0755 _out/cmd/cdi-controller/cdi-controller %{buildroot}%{_bindir}/cdi-controller
 
-install -p -m 0755 _out/cmd/cdi-importer/cdi-importer %{buildroot}%{_bindir}/virt-cdi-importer
+install -p -m 0755 _out/cmd/cdi-importer/cdi-importer %{buildroot}%{_bindir}/cdi-importer
 
-install -p -m 0755 _out/cmd/cdi-operator/cdi-operator %{buildroot}%{_bindir}/virt-cdi-operator
+install -p -m 0755 _out/cmd/cdi-operator/cdi-operator %{buildroot}%{_bindir}/cdi-operator
 
-install -p -m 0755 _out/cmd/cdi-uploadproxy/cdi-uploadproxy %{buildroot}%{_bindir}/virt-cdi-uploadproxy
+install -p -m 0755 _out/cmd/cdi-uploadproxy/cdi-uploadproxy %{buildroot}%{_bindir}/cdi-uploadproxy
 
-install -p -m 0755 _out/cmd/cdi-uploadserver/cdi-uploadserver %{buildroot}%{_bindir}/virt-cdi-uploadserver
+install -p -m 0755 _out/cmd/cdi-uploadserver/cdi-uploadserver %{buildroot}%{_bindir}/cdi-uploadserver
+
+install -p -m 0755 _out/tools/cdi-containerimage-server/cdi-containerimage-server %{buildroot}%{_bindir}/cdi-containerimage-server
+
+install -p -m 0755 _out/tools/cdi-image-size-detection/cdi-image-size-detection %{buildroot}%{_bindir}/cdi-image-size-detection
+
+install -p -m 0755 _out/tools/cdi-source-update-poller/cdi-source-update-poller %{buildroot}%{_bindir}/cdi-source-update-poller
+
+install -p -m 0755 _out/tools/csv-generator/csv-generator %{buildroot}%{_bindir}/csv-generator
 
 # Install release manifests
 mkdir -p %{buildroot}%{_datadir}/cdi/manifests/release
@@ -155,7 +169,7 @@ install -m 0644 _out/manifests/release/cdi-cr.yaml %{buildroot}%{_datadir}/cdi/m
 %files api
 %license LICENSE
 %doc README.md
-%{_bindir}/virt-cdi-apiserver
+%{_bindir}/cdi-apiserver
 
 %files cloner
 %license LICENSE
@@ -166,27 +180,31 @@ install -m 0644 _out/manifests/release/cdi-cr.yaml %{buildroot}%{_datadir}/cdi/m
 %files controller
 %license LICENSE
 %doc README.md
-%{_bindir}/virt-cdi-controller
+%{_bindir}/cdi-controller
 
 %files importer
 %license LICENSE
 %doc README.md
-%{_bindir}/virt-cdi-importer
+%{_bindir}/cdi-importer
+%{_bindir}/cdi-containerimage-server
+%{_bindir}/cdi-image-size-detection
+%{_bindir}/cdi-source-update-poller
 
 %files operator
 %license LICENSE
 %doc README.md
-%{_bindir}/virt-cdi-operator
+%{_bindir}/cdi-operator
+%{_bindir}/csv-generator
 
 %files uploadproxy
 %license LICENSE
 %doc README.md
-%{_bindir}/virt-cdi-uploadproxy
+%{_bindir}/cdi-uploadproxy
 
 %files uploadserver
 %license LICENSE
 %doc README.md
-%{_bindir}/virt-cdi-uploadserver
+%{_bindir}/cdi-uploadserver
 
 %files manifests
 %license LICENSE
@@ -197,7 +215,10 @@ install -m 0644 _out/manifests/release/cdi-cr.yaml %{buildroot}%{_datadir}/cdi/m
 %{_datadir}/cdi/manifests
 
 %changelog
-* Fri May 26 2023 Aditya Dubey <adityadubey@microsoft.com> - 1.55.0-0
+* Mon Jun 19 2023 Aditya Dubey <adityadubey@microsoft.com> - 1.55.0-11
+- Adding tools/ binaries to spec
+
+* Fri May 26 2023 Aditya Dubey <adityadubey@microsoft.com> - 1.55.0-10
 - Update to verion 1.55.0
 
 * Wed Apr 05 2023 CBL-Mariner Servicing Account <cblmargh@microsoft.com> - 1.51.0-10
