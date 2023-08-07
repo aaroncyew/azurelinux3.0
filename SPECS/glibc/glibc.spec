@@ -1,3 +1,17 @@
+##############################################################################
+# Utility functions for pre/post scripts.  Stick them at the beginning of
+# any lua %pre, %post, %postun, etc. sections to have them expand into
+# those scripts.  It only works in lua sections and not anywhere else.
+%global glibc_post_funcs %{expand:
+-- We use lua because there may be no shell that we can run during
+-- glibc upgrade.
+--
+function call_ldconfig ()
+  if not rpm.execute("/sbin/ldconfig") then
+    io.stdout:write ("Error: call to /sbin/ldconfig failed.\n")
+  end
+end}
+
 %global security_hardening nonow
 %define glibc_target_cpu %{_build}
 
@@ -7,7 +21,7 @@
 Summary:        Main C library
 Name:           glibc
 Version:        2.35
-Release:        4%{?dist}
+Release:        5%{?dist}
 License:        BSD AND GPLv2+ AND Inner-Net AND ISC AND LGPLv2+ AND MIT
 Vendor:         Microsoft Corporation
 Distribution:   Mariner
@@ -244,6 +258,19 @@ grep "^FAIL: nptl/tst-eintr1" tests.sum >/dev/null && n=$((n+1)) ||:
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
 
+######################################################################
+# File triggers to do ldconfig calls automatically (see rhbz#1380878)
+######################################################################
+%transfiletriggerin -P 2000000 -p <lua> -- /lib %{_libdir} /lib64 %{_lib64dir}
+%glibc_post_funcs
+call_ldconfig()
+%end
+
+%transfiletriggerpostun -P 2000000 -p <lua> -- /lib %{_libdir} /lib64 %{_lib64dir}
+%glibc_post_funcs
+call_ldconfig()
+%end
+
 %files
 %defattr(-,root,root)
 %license COPYING COPYING.LIB LICENSES
@@ -262,7 +289,6 @@ grep "^FAIL: nptl/tst-eintr1" tests.sum >/dev/null && n=$((n+1)) ||:
 %{_lib64dir}/*.so
 /sbin/ldconfig
 /sbin/locale-gen.sh
-#%%{_sbindir}/zdump
 %{_sbindir}/zic
 %{_sbindir}/iconvconfig
 %{_bindir}/*
@@ -319,6 +345,9 @@ grep "^FAIL: nptl/tst-eintr1" tests.sum >/dev/null && n=$((n+1)) ||:
 %defattr(-,root,root)
 
 %changelog
+* Thu Aug 03 2023 Pawel Winogrodzki <pawelwi@microsoft.com> - 2.35-5
+- Adding file triggers to do ldconfig calls automatically using Fedora 38 (license: MIT) spec for guidance.
+
 * Fri Jun 30 2023 Andrew Phelps <anphel@microsoft.com> - 2.35-4
 - Restore glibc-debuginfo package
 
