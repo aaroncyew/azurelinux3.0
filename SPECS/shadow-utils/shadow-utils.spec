@@ -1,7 +1,7 @@
 Summary:        Programs for handling passwords in a secure way
 Name:           shadow-utils
 Version:        4.9
-Release:        12%{?dist}
+Release:        13%{?dist}
 License:        BSD
 Vendor:         Microsoft Corporation
 Distribution:   Mariner
@@ -22,8 +22,8 @@ Source12:       useradd-default
 Source13:       login-defs
 Patch0:         chkname-allowcase.patch
 Patch1:         libsubid-pam-link.patch
-BuildRequires:  autoconf
 BuildRequires:  audit-devel
+BuildRequires:  autoconf
 BuildRequires:  automake
 BuildRequires:  cracklib
 BuildRequires:  cracklib-devel
@@ -42,11 +42,11 @@ Requires:       libselinux
 Requires:       libsemanage
 Requires:       pam
 Provides:       /sbin/nologin
-Provides:       /usr/sbin/groupadd
-Provides:       /usr/sbin/groupdel
-Provides:       /usr/sbin/nologin
-Provides:       /usr/sbin/useradd
-Provides:       /usr/sbin/userdel
+Provides:       %{_sbindir}/groupadd
+Provides:       %{_sbindir}/groupdel
+Provides:       %{_sbindir}/nologin
+Provides:       %{_sbindir}/useradd
+Provides:       %{_sbindir}/userdel
 Provides:       passwd = %{version}-%{release}
 
 %description
@@ -176,6 +176,9 @@ chmod 000 %{_sysconfdir}/shadow
 %{_libdir}/libsubid.so
 
 %changelog
+* Mon Jul 31 2023 Richard Whitehouse <richard.whitehouse@microsoft.com> - 4.9-13
+- Increase SHA-512 rounds to match OWASP guidance
+
 * Wed May 24 2023 Tobias Brick <tobiasb@microsoft.com> - 4.9-12
 - Add SETUID bit to passwd binary
 
