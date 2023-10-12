@@ -1,3 +1,17 @@
+Summary:        Go
+Name:           golang
+Version:        1.20.7
+Release:        2%{?dist}
+License:        BSD-3-Clause
+Vendor:         Microsoft Corporation
+Distribution:   Mariner
+Group:          System Environment/Security
+URL:            https://golang.org
+Source0:        https://golang.org/dl/go%{version}.src.tar.gz
+Source1:        https://dl.google.com/go/go1.4-bootstrap-20171003.tar.gz
+Source2:        https://dl.google.com/go/go%{bootstrap_compiler_version}.src.tar.gz
+Patch0:         go14_bootstrap_aarch64.patch
+Patch1:         permit-requests-with-invalid-header.patch
 %global bootstrap_compiler_version 1.19.12
 %global goroot          %{_libdir}/golang
 %global gopath          %{_datadir}/gocode
@@ -11,20 +25,6 @@
 # rpmbuild magic to keep from having meta dependency on libc.so.6
 %define _use_internal_dependency_generator 0
 %define __find_requires %{nil}
-Summary:        Go
-Name:           golang
-Version:        1.20.7
-Release:        1%{?dist}
-License:        BSD-3-Clause
-Vendor:         Microsoft Corporation
-Distribution:   Mariner
-Group:          System Environment/Security
-URL:            https://golang.org
-Source0:        https://golang.org/dl/go%{version}.src.tar.gz
-Source1:        https://dl.google.com/go/go1.4-bootstrap-20171003.tar.gz
-Source2:        https://dl.google.com/go/go%{bootstrap_compiler_version}.src.tar.gz
-Patch0:         go14_bootstrap_aarch64.patch
-Patch1:         permit-requests-with-invalid-header.patch
 Obsoletes:      %{name} < %{version}
 Provides:       %{name} = %{version}
 Provides:       go = %{version}-%{release}
@@ -79,7 +79,7 @@ export GOROOT_BOOTSTRAP=%{goroot}
 
 export GOROOT="`pwd`"
 export GOPATH=%{gopath}
-export GOROOT_FINAL=%{_bindir}/go
+export GOROOT_FINAL=%{goroot}
 rm -f  %{gopath}/src/runtime/*.c
 pushd src
 ./make.bash --no-clean
@@ -143,6 +143,9 @@ fi
 %{_bindir}/*
 
 %changelog
+* Tue Oct 10 2023 Brian Goff <brgoff@microsoft.com> - 1.20.7-2
+- Fix GOROOT_FINAL to point at libdir/golang instead of bindir/go
+
 * Tue Aug 15 2023 Muhammad Falak <mwani@microsoft.com> - 1.20.7-1
 - Bump version to 1.20.7
 - Introduce patch to permit requests with invalid host header
