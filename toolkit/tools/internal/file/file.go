@@ -5,19 +5,25 @@ package file
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"hash"
 	"io"
 	"io/fs"
 	"os"
+	"os/user"
 	"path/filepath"
 
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/logger"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/marinertoolusers"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/shell"
 )
+
+const compareBufferSize = 4096
 
 // IsDir check if a given file path is a directory.
 func IsDir(filePath string) (isDir bool, err error) {
@@ -77,13 +83,114 @@ func Move(src, dst string) (err error) {
 // Copy copies a file from src to dst, creating directories for the destination if needed.
 // dst is assumed to be a file and not a directory. Will preserve permissions.
 func Copy(src, dst string) (err error) {
-	return copyWithPermissions(src, dst, os.ModePerm, false, os.ModePerm)
+	return copyWithPermissions(src, dst, os.ModePerm, false, os.ModePerm, nil)
+}
+
+// Copy copies a file from src to dst, creating directories for the destination if needed.
+// dst is assumed to be a file and not a directory. Will preserve permissions. Ownership will
+// be assigned to the given user.
+func CopyWithUser(src, dst string, user *user.User) (err error) {
+	return copyWithPermissions(src, dst, os.ModePerm, false, os.ModePerm, user)
 }
 
 // CopyAndChangeMode copies a file from src to dst, creating directories with the given access rights for the destination if needed.
 // dst is assumed to be a file and not a directory. Will change the permissions to the given value.
 func CopyAndChangeMode(src, dst string, dirmode os.FileMode, filemode os.FileMode) (err error) {
-	return copyWithPermissions(src, dst, dirmode, true, filemode)
+	return copyWithPermissions(src, dst, dirmode, true, filemode, nil)
+}
+
+// CopyAndChangeModeWithUser copies a file from src to dst, creating directories with the given access rights for the destination if needed.
+// dst is assumed to be a file and not a directory. Will change the permissions to the given value. Ownership will be
+// assigned to the given user.
+func CopyAndChangeModeWithUser(src, dst string, dirmode os.FileMode, filemode os.FileMode, user *user.User) (err error) {
+	return copyWithPermissions(src, dst, dirmode, true, filemode, user)
+}
+
+func readOneCompareBlock(in io.Reader, buffer *[]byte) (readSize int, err error) {
+	readSize = 0
+	for currentRead := 0; readSize < compareBufferSize; {
+		currentRead, err = in.Read((*buffer)[readSize:])
+		readSize += currentRead
+		if err != nil {
+			break
+		}
+	}
+	return
+}
+
+func compareFileByteStreams(in1, in2 io.Reader) (isSame bool, err error) {
+	buffer1 := make([]byte, compareBufferSize)
+	buffer2 := make([]byte, compareBufferSize)
+	isSame = true
+	for {
+		var readSize1 int
+		readSize1, err = readOneCompareBlock(in1, &buffer1)
+		if err != nil && err != io.EOF {
+			err = fmt.Errorf("unable to read from input 1 while comparing files:\n%w", err)
+			isSame = false
+			return
+		} else {
+			err = nil
+		}
+
+		var readSize2 int
+		readSize2, err = readOneCompareBlock(in2, &buffer2)
+		if err != nil && err != io.EOF {
+			err = fmt.Errorf("unable to read from input 2 while comparing files:\n%w", err)
+			isSame = false
+			return
+		} else {
+			err = nil
+		}
+
+		if readSize1 != readSize2 {
+			isSame = false
+			return
+		}
+		if readSize1 == 0 {
+			break
+		}
+		if !bytes.Equal(buffer1, buffer2) {
+			isSame = false
+			return
+		}
+	}
+	return
+}
+
+func ContentsAreSame(src, dst string) (isSame bool, err error) {
+	isSame = false
+	srcExists, err := PathExists(src)
+	if err != nil {
+		err = fmt.Errorf("unable to check if destination file exists:\n%w", err)
+		return
+	}
+	dstExists, err := PathExists(dst)
+	if err != nil {
+		err = fmt.Errorf("unable to check if destination file exists:\n%w", err)
+		return
+	}
+	if srcExists && dstExists {
+		var srcFile, dstFile *os.File
+		srcFile, err = os.Open(src)
+		if err != nil {
+			err = fmt.Errorf("unable to open source file:\n%w", err)
+			return
+		}
+		defer srcFile.Close()
+		dstFile, err = os.Open(dst)
+		if err != nil {
+			err = fmt.Errorf("unable to open destination file:\n%w", err)
+			return
+		}
+		defer dstFile.Close()
+		isSame, err = compareFileByteStreams(srcFile, dstFile)
+		if err != nil {
+			err = fmt.Errorf("unable to compare files:\n%w", err)
+			return
+		}
+	}
+	return
 }
 
 // readLines reads file under path and returns lines as strings and any error encountered
@@ -171,43 +278,55 @@ func RemoveFileIfExists(path string) (err error) {
 	return
 }
 
-// GenerateSHA1 calculates a sha1 of a file
-func GenerateSHA1(path string) (hash string, err error) {
-	file, err := os.Open(path)
+// GenerateSHA1String calculates a sha1 of a file
+func GenerateSHA1String(path string) (hash string, err error) {
+	rawHash, err := CalculateSHA1Bytes([]string{path})
 	if err != nil {
 		return
 	}
-	defer file.Close()
-
-	sha1Generator := sha1.New()
-	_, err = io.Copy(sha1Generator, file)
-	if err != nil {
-		return
-	}
-
-	rawHash := sha1Generator.Sum(nil)
 	hash = hex.EncodeToString(rawHash)
-
 	return
 }
 
-// GenerateSHA256 calculates a sha256 of a file
-func GenerateSHA256(path string) (hash string, err error) {
-	file, err := os.Open(path)
+// GenerateSHA256String calculates a sha256 of a file
+func GenerateSHA256String(path string) (hash string, err error) {
+	rawHash, err := CalculateSHA256Bytes([]string{path})
 	if err != nil {
 		return
 	}
-	defer file.Close()
-
-	sha256Generator := sha256.New()
-	_, err = io.Copy(sha256Generator, file)
-	if err != nil {
-		return
-	}
-
-	rawHash := sha256Generator.Sum(nil)
 	hash = hex.EncodeToString(rawHash)
+	return
+}
 
+func CalculateSHA1Bytes(inputFiles []string) (hash []byte, err error) {
+	fileHasher := sha1.New()
+	err = calculateHashForFiles(inputFiles, fileHasher)
+	hash = fileHasher.Sum(nil)
+	return
+}
+
+func CalculateSHA256Bytes(inputFiles []string) (hash []byte, err error) {
+	fileHasher := sha256.New()
+	err = calculateHashForFiles(inputFiles, fileHasher)
+	hash = fileHasher.Sum(nil)
+	return
+}
+
+func calculateHashForFiles(inputFiles []string, fileHasher hash.Hash) (err error) {
+	for _, inputFile := range inputFiles {
+		// Read the file, and pass into the hasher
+		var data []byte
+		data, err = os.ReadFile(inputFile)
+		if err != nil {
+			err = fmt.Errorf("unable to read input file:\n%w", err)
+			return
+		}
+		_, err = fileHasher.Write(data)
+		if err != nil {
+			err = fmt.Errorf("unable to hash file:\n%w", err)
+			return
+		}
+	}
 	return
 }
 
@@ -246,7 +365,7 @@ func GetAbsPathWithBase(baseDirPath, inputPath string) string {
 
 // copyWithPermissions copies a file from src to dst, creating directories with the requested mode for the destination if needed.
 // Depending on the changeMode parameter, it may also change the file mode.
-func copyWithPermissions(src, dst string, dirmode os.FileMode, changeMode bool, filemode os.FileMode) (err error) {
+func copyWithPermissions(src, dst string, dirmode os.FileMode, changeMode bool, filemode os.FileMode, user *user.User) (err error) {
 	const squashErrors = false
 
 	logger.Log.Debugf("Copying (%s) -> (%s)", src, dst)
@@ -259,7 +378,7 @@ func copyWithPermissions(src, dst string, dirmode os.FileMode, changeMode bool, 
 		return fmt.Errorf("source (%s) is not a file", src)
 	}
 
-	err = createDestinationDir(dst, dirmode)
+	err = createDestinationDir(dst, dirmode, user)
 	if err != nil {
 		return
 	}
@@ -274,10 +393,17 @@ func copyWithPermissions(src, dst string, dirmode os.FileMode, changeMode bool, 
 		err = os.Chmod(dst, filemode)
 	}
 
+	if user != nil {
+		err = marinertoolusers.GiveSinglePathToUser(dst, user)
+		if err != nil {
+			return
+		}
+	}
+
 	return
 }
 
-func createDestinationDir(dst string, dirmode os.FileMode) (err error) {
+func createDestinationDir(dst string, dirmode os.FileMode, user *user.User) (err error) {
 	isDstExist, err := PathExists(dst)
 	if err != nil {
 		return err
@@ -299,16 +425,22 @@ func createDestinationDir(dst string, dirmode os.FileMode) (err error) {
 		if err != nil {
 			return
 		}
+		if user != nil {
+			err = marinertoolusers.GiveSinglePathToUser(destDir, user)
+			if err != nil {
+				return
+			}
+		}
 	}
 
 	return
 }
 
 // CopyResourceFile copies a file from an embedded binary resource file.
-func CopyResourceFile(srcFS fs.FS, srcFile, dst string, dirmode os.FileMode, filemode os.FileMode) error {
+func CopyResourceFile(srcFS fs.FS, srcFile, dst string, dirmode os.FileMode, filemode os.FileMode, user *user.User) error {
 	logger.Log.Debugf("Copying resource (%s) -> (%s)", srcFile, dst)
 
-	err := createDestinationDir(dst, dirmode)
+	err := createDestinationDir(dst, dirmode, user)
 	if err != nil {
 		return err
 	}
@@ -333,6 +465,13 @@ func CopyResourceFile(srcFS fs.FS, srcFile, dst string, dirmode os.FileMode, fil
 	err = os.Chmod(dst, filemode)
 	if err != nil {
 		return fmt.Errorf("failed to copy resource (%s) -> (%s):\nfailed to set filemode:\n%w", srcFile, dst, err)
+	}
+
+	if user != nil {
+		err = marinertoolusers.GiveSinglePathToUser(dst, user)
+		if err != nil {
+			return fmt.Errorf("failed to copy resource (%s) -> (%s):\nfailed to set ownership:\n%w", srcFile, dst, err)
+		}
 	}
 
 	return nil
