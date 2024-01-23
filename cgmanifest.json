@@ -21884,8 +21884,8 @@
         "type": "other",
         "other": {
           "name": "python-cffi",
-          "version": "1.15.0",
-          "downloadUrl": "https://pypi.python.org/packages/source/c/cffi/cffi-1.15.0.tar.gz"
+          "version": "1.16.0",
+          "downloadUrl": "https://files.pythonhosted.org/packages/68/ce/95b0bae7968c65473e1298efb042e10cafc7bafc14d9e4f154008241c91d/cffi-1.16.0.tar.gz"
         }
       }
     },
@@ -21924,8 +21924,8 @@
         "type": "other",
         "other": {
           "name": "python-cherrypy",
-          "version": "18.6.1",
-          "downloadUrl": "https://pypi.io/packages/source/C/CherryPy/CherryPy-18.6.1.tar.gz"
+          "version": "18.9.0",
+          "downloadUrl": "https://files.pythonhosted.org/packages/bd/5f/e265a49883bfcfb7f2c3d3d9e96197cfe8136783e96c5ce20e201550aaa0/CherryPy-18.9.0.tar.gz"
         }
       }
     },
@@ -22204,8 +22204,8 @@
         "type": "other",
         "other": {
           "name": "python-distlib",
-          "version": "0.3.6",
-          "downloadUrl": "https://files.pythonhosted.org/packages/source/d/distlib/distlib-0.3.6.tar.gz"
+          "version": "0.3.8",
+          "downloadUrl": "https://files.pythonhosted.org/packages/c4/91/e2df406fb4efacdf46871c25cde65d3c6ee5e173b7e5a4547a47bae91920/distlib-0.3.8.tar.gz"
         }
       }
     },
@@ -22934,8 +22934,8 @@
         "type": "other",
         "other": {
           "name": "python-libclang",
-          "version": "14.0.6",
-          "downloadUrl": "https://files.pythonhosted.org/packages/source/l/libclang/libclang-14.0.6.tar.gz"
+          "version": "16.0.6",
+          "downloadUrl": "https://files.pythonhosted.org/packages/c2/01/ec65dffc8c94bd8cafd359a76992f3212a239a80ead05522995c105432b8/libclang-16.0.6.tar.gz"
         }
       }
     },
@@ -23234,8 +23234,8 @@
         "type": "other",
         "other": {
           "name": "python-oauthlib",
-          "version": "2.1.0",
-          "downloadUrl": "https://files.pythonhosted.org/packages/df/5f/3f4aae7b28db87ddef18afed3b71921e531ca288dc604eb981e9ec9f8853/oauthlib-2.1.0.tar.gz"
+          "version": "3.2.2",
+          "downloadUrl": "https://files.pythonhosted.org/packages/6d/fa/fbf4001037904031639e6bfbfc02badfc7e12f137a8afa254df6c4c8a670/oauthlib-3.2.2.tar.gz"
         }
       }
     },
@@ -23714,8 +23714,8 @@
         "type": "other",
         "other": {
           "name": "python-pytest-mock",
-          "version": "3.7.0",
-          "downloadUrl": "https://files.pythonhosted.org/packages/96/e1/fb53b62056e6840a36d9a4beb4e42726155594c567b574103435a7131c60/pytest-mock-3.7.0.tar.gz"
+          "version": "3.12.0",
+          "downloadUrl": "https://files.pythonhosted.org/packages/b3/96/25588c55fbe330b751bd7c7d723c3544957566bc090f6d506551b514f488/pytest-mock-3.12.0.tar.gz"
         }
       }
     },
