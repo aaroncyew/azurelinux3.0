@@ -1,35 +1,25 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-// A boilerplate for Mariner go tools
-
 package main
 
 import (
 	"path"
 
-	"github.com/microsoft/CBL-Mariner/toolkit/tools/boilerplate/hello"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/bldtracker"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/depsearch"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/exe"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/globals"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/logger"
-	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/timestamp"
 
 	"github.com/alecthomas/kong"
 )
 
-type HelloCmd struct {
-	Name string `arg:"" help:"Name" default:"Mariner"`
-}
-
-func (cmd *HelloCmd) Run(globals *globals.Globals) error {
-	logger.Log.Info(hello.Name(cmd.Name))
-	return nil
-}
-
 type CLI struct {
 	globals.Globals
 
-	Hello HelloCmd `cmd:"" help:"Say hello to Name"`
+	Depsearch  depsearch.DepSearchCmd   `cmd:"" help:"Returns a list of everything that depends on a given package or spec"`
+	Bldtracker bldtracker.BldTrackerCmd `cmd:"" help:"Track build time of different steps in a makefile"`
 }
 
 func main() {
@@ -45,11 +35,7 @@ func main() {
 		kong.Vars{"version": exe.ToolkitVersion})
 
 	logger.InitBestEffort(cli.LogFile, cli.LogLevel)
-	timestamp.BeginTiming("boilerplate", cli.TimestampFile)
-	defer timestamp.CompleteTiming()
 
 	err := ctx.Run(&cli.Globals)
 	ctx.FatalIfErrorf(err)
-
-	logger.Log.Info(hello.World())
 }
