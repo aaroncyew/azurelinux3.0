@@ -17,8 +17,13 @@
 
 Summary:        Tool to extract class/interface/method definitions from sources
 Name:           qdox
+<<<<<<< HEAD
+Version:        2.0.0
+Release:        3%{?dist}
+=======
 Version:        2.0.3
 Release:        1%{?dist}
+>>>>>>> mitchzhu/3-0-hamcrest
 License:        ASL 2.0
 Group:          Development/Libraries/Java
 Vendor:         Microsoft Corporation
@@ -73,6 +78,28 @@ CLASSPATH=$(build-classpath java-cup) \
 CLASSPATH=$(build-classpath java-cup) \
   jflex -d src/main/java/com/thoughtworks/qdox/parser/impl src/grammar/commentlexer.flex
 
+<<<<<<< HEAD
+# Generate the parsers using the command-line that the exec-maven-plugin uses
+GRAMMAR_PATH=$(pwd)/src/grammar/commentparser.y && \
+  (cd src/main/java/com/thoughtworks/qdox/parser/impl && \
+  byaccj -v -Jnorun -Jnoconstruct -Jclass=DefaultJavaCommentParser \
+    -Jpackage=com.thoughtworks.qdox.parser.impl ${GRAMMAR_PATH})
+GRAMMAR_PATH=$(pwd)/src/grammar/parser.y && \
+  (cd src/main/java/com/thoughtworks/qdox/parser/impl && \
+  byaccj -v -Jnorun -Jnoconstruct -Jclass=Parser \
+    -Jimplements=CommentHandler -Jsemantic=Value \
+	-Jpackage=com.thoughtworks.qdox.parser.impl \
+	-Jstack=500 ${GRAMMAR_PATH})
+
+# Build artifact
+mkdir -p build/classes
+javac -d build/classes -source 8 -target 8 \
+  $(find src/main/java -name \*.java)
+jar cf build/%{name}-%{version}.jar -C build/classes .
+
+# Inject OSGi manifests
+jar ufm build/%{name}-%{version}.jar %{SOURCE1}
+=======
 # Generate parsers (upstream does this with exec-maven-plugin)
 (cd ./src/main/java/com/thoughtworks/qdox/parser/impl
  byaccj -v -Jnorun -Jnoconstruct -Jclass=DefaultJavaCommentParser \
@@ -82,6 +109,7 @@ CLASSPATH=$(build-classpath java-cup) \
 )
 
 %ant jar javadoc
+>>>>>>> mitchzhu/3-0-hamcrest
 
 %install
 # jar
@@ -105,6 +133,10 @@ cp -aL target/site/apidocs/* %{buildroot}%{_javadocdir}/%{name}
 %license LICENSE.txt
 
 %changelog
+<<<<<<< HEAD
+* Tue Feb 27 2024 Riken Maharjan <rmaharjan@microsoft.com> - 2.0.0-3
+- rebuild with msopenjdk-17
+=======
 * Thu Feb 08 2024 Henry Li <lihl@microsoft.com> - 2.0.3-1
 - Upgrade to version 2.0.3
 - Update Source0
@@ -112,6 +144,7 @@ cp -aL target/site/apidocs/* %{buildroot}%{_javadocdir}/%{name}
 - Apply patch to use jflex 1.7.0 and remove duplicate constructor definitions
 - Add build xml file to define compilation targets and procedure
 - Add qdox-javadoc subpackage
+>>>>>>> mitchzhu/3-0-hamcrest
 
 * Mon Mar 28 2022 Cameron Baird <cameronbaird@microsoft.com> - 2.0.0-2
 - Move to SPECS
