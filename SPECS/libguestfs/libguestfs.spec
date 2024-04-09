@@ -21,11 +21,12 @@
 %bcond_with php
 %bcond_with inspect-icons
 %bcond_with man-pages
+%bcond_with zfs
 
 Summary:        Access and modify virtual machine disk images
 Name:           libguestfs
 Version:        1.52.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 License:        LGPLv2+
 Vendor:         Microsoft Corporation
 Distribution:   Azure Linux
@@ -224,10 +225,6 @@ BuildRequires:  syslinux
 BuildRequires:  syslinux-devel
 %endif
 
-%ifnarch aarch64
-BuildRequires:  zfs-fuse
-%endif
-
 # For core disk-create API.
 Requires:       qemu-img
 # The daemon dependencies are not included automatically, because it
@@ -389,6 +386,7 @@ Requires:       %{name}%{?_isa} = %{version}-%{release}
 This adds XFS support to %{name}.  Install it if you want to process
 disk images containing XFS.
 
+%if %{with zfs}
 %ifnarch aarch64
 %package zfs
 Summary:        ZFS support for %{name}
@@ -400,7 +398,7 @@ Requires:       %{name}%{?_isa} = %{version}-%{release}
 This adds ZFS support to %{name}.  Install it if you want to process
 disk images containing ZFS.
 %endif
-
+%endif
 
 %if %{with inspect-icons}
 %package inspect-icons
@@ -822,8 +820,10 @@ tdnf install --downloadonly -y \
     xz \
     yajl \
     zerofree \
+%if %{with zfs}
 %ifnarch aarch64
     zfs-fuse \
+%endif
 %endif
 
 mkdir cachedir repo
@@ -927,8 +927,10 @@ move_to strace          zz-packages-rescue
 move_to vim             zz-packages-rescue
 move_to rsync           zz-packages-rsync
 move_to xfsprogs        zz-packages-xfs
+%if %{with zfs}
 %ifnarch aarch64
 move_to zfs-fuse        zz-packages-zfs
+%endif
 %endif
 
 popd
@@ -1007,9 +1009,11 @@ rm ocaml/html/.gitignore
 %files xfs
 %{_libdir}/guestfs/supermin.d/zz-packages-xfs
 
+%if %{with zfs}
 %ifnarch aarch64
 %files zfs
 %{_libdir}/guestfs/supermin.d/zz-packages-zfs
+%endif
 %endif
 
 %endif
@@ -1146,6 +1150,9 @@ rm ocaml/html/.gitignore
 %endif
 
 %changelog
+* Wed Apr 03 2024 Jon Slobodzian <joslobo@microsoft.com> - 1.52.0-2
+* Remove dependency on zfs-fuse
+
 * Wed Mar 27 2024 BettyLakes <bettylakes@microsoft.com> - 1.52.0-1
 - Update to 1.52.0
 - Move to pcre2
