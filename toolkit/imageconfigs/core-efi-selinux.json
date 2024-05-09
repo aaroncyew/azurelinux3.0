@@ -37,7 +37,7 @@
                 {
                     "ID": "boot",
                     "MountPoint": "/boot/efi",
-                    "MountOptions" : "umask=0077"
+                    "MountOptions": "umask=0077"
                 },
                 {
                     "ID": "rootfs",
@@ -55,6 +55,9 @@
             },
             "KernelOptions": {
                 "default": "kernel"
+            },
+            "AdditionalFiles": {
+                "additionalfiles/os-source-core-selinux": "/etc/os-source"
             },
             "Hostname": "azurelinux"
         }
