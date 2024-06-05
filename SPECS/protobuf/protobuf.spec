@@ -1,17 +1,26 @@
+%global protoc_path %{_builddir}/%{name}-%{version}/cmake/protoc
+
 Summary:        Google's data interchange format
 Name:           protobuf
-Version:        3.17.3
-Release:        2%{?dist}
+Version:        25.3
+Release:        1%{?dist}
 License:        BSD
 Vendor:         Microsoft Corporation
-Distribution:   Mariner
+Distribution:   Azure Linux
 Group:          Development/Libraries
 URL:            https://developers.google.com/protocol-buffers/
-Source0:        https://github.com/protocolbuffers/protobuf/releases/download/v%{version}/%{name}-all-%{version}.tar.gz
+Source0:        https://github.com/protocolbuffers/protobuf/releases/download/v%{version}/%{name}-%{version}.tar.gz
+BuildRequires:  abseil-cpp-devel
+BuildRequires:  cmake
 BuildRequires:  curl
 BuildRequires:  libstdc++
-BuildRequires:  make
 BuildRequires:  unzip
+
+%if %{with_check}
+BuildRequires:  gtest-devel
+BuildRequires:  gmock-devel
+%endif
+
 Provides:       %{name}-compiler = %{version}-%{release}
 Provides:       %{name}-lite = %{version}-%{release}
 
@@ -57,57 +66,66 @@ This contains protobuf python3 libraries.
 %autosetup
 
 %build
-%configure --disable-silent-rules
-%make_build
+%{cmake} \
+%if 0%{with_check}
+    -Dprotobuf_USE_EXTERNAL_GTEST=ON \
+%else
+    -Dprotobuf_BUILD_TESTS=OFF \
+%endif
+    -Dprotobuf_ABSL_PROVIDER=package \
+    -Dprotobuf_ABSL_MIN=20240116.0 \
+    -Dprotobuf_BUILD_SHARED_LIBS=ON \
+    -DCMAKE_INSTALL_LIBDIR=%{_libdir}
 
-# build python subpackage
+%{cmake_build}
+
+export PROTOC="%{protoc_path}"
+
 pushd python
-%py3_build
+%{py3_build}
 popd
 
 %install
-%make_install
+%{cmake_install}
 
-# install python subpackage
+export PROTOC="%{protoc_path}"
+
 pushd python
-%py3_install
+%{py3_install}
 popd
 
-%ldconfig_scriptlets
+%post -p /sbin/ldconfig
+%postun -p /sbin/ldconfig
 
 %check
-# run C++ unit tests
-%make_build check
+ctest --progress --output-on-failure
 
 %files
 %defattr(-,root,root)
 %license LICENSE
-%{_bindir}/protoc
-%{_libdir}/libprotobuf-lite.so.28*
-%{_libdir}/libprotobuf.so.28*
-%{_libdir}/libprotoc.so.28*
+%{_bindir}/protoc*
+%{_libdir}/*.so.*
 
 %files devel
 %defattr(-,root,root)
 %{_includedir}/*
 %{_libdir}/pkgconfig/*
-%{_libdir}/libprotobuf-lite.la
-%{_libdir}/libprotobuf-lite.so
-%{_libdir}/libprotobuf.la
-%{_libdir}/libprotobuf.so
-%{_libdir}/libprotoc.la
-%{_libdir}/libprotoc.so
+%{_libdir}/*.so
+%{_libdir}/cmake/*
 
 %files static
 %defattr(-,root,root)
-%{_libdir}/libprotobuf-lite.a
-%{_libdir}/libprotobuf.a
-%{_libdir}/libprotoc.a
+%{_libdir}/*.a
 
 %files -n python3-%{name}
 %{python3_sitelib}/*
 
 %changelog
+* Thu Mar 21 2024 Pawel Winogrodzki <pawelwi@microsoft.com> - 25.3-1
+- Upgraded to version 25.3.
+- Switching to building with cmake and producing cmake package files.
+- Updated the %%check stage.
+
 * Mon Mar 20 2023 Mykhailo Bykhovtsev <mbykhovtsev@microsoft.com> - 3.17.3-2
 - Added check section for running tests
 
