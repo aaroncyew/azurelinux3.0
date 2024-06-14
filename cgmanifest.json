@@ -3197,6 +3197,16 @@
       "component": {
         "type": "other",
         "other": {
+          "name": "efitools",
+          "version": "1.9.2",
+          "downloadUrl": "https://git.kernel.org/pub/scm/linux/kernel/git/jejb/efitools.git/snapshot/efitools-1.9.2.tar.gz"
+        }
+      }
+    },
+    {
+      "component": {
+        "type": "other",
+        "other": {
           "name": "efivar",
           "version": "39",
           "downloadUrl": "https://github.com/rhboot/efivar/archive/refs/tags/39.tar.gz"
@@ -27556,8 +27566,8 @@
         "type": "other",
         "other": {
           "name": "shim-unsigned-aarch64",
-          "version": "15.4",
-          "downloadUrl": "https://github.com/rhboot/shim/releases/download/15.4/shim-15.4.tar.bz2"
+          "version": "15.8",
+          "downloadUrl": "https://github.com/rhboot/shim/releases/download/15.8/shim-15.8.tar.bz2"
         }
       }
     },
@@ -27566,8 +27576,8 @@
         "type": "other",
         "other": {
           "name": "shim-unsigned-x64",
-          "version": "15.4",
-          "downloadUrl": "https://github.com/rhboot/shim/releases/download/15.4/shim-15.4.tar.bz2"
+          "version": "15.8",
+          "downloadUrl": "https://github.com/rhboot/shim/releases/download/15.8/shim-15.8.tar.bz2"
         }
       }
     },

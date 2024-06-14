@@ -1,4 +1,5 @@
 %define debug_package %{nil}
+%define efidir azurelinux
 %define __os_install_post %{nil}
 # Gnulib does not produce source tarball releases, and grub's bootstrap.conf
 # bakes in a specific commit id to pull (GNULIB_REVISION).
@@ -6,7 +7,7 @@
 Summary:        GRand Unified Bootloader
 Name:           grub2
 Version:        2.06
-Release:        18%{?dist}
+Release:        19%{?dist}
 License:        GPLv3+
 Vendor:         Microsoft Corporation
 Distribution:   Azure Linux
@@ -170,6 +171,8 @@ Unsigned GRUB UEFI image
 Summary:        GRUB UEFI image
 Group:          System Environment/Base
 Requires:       %{name}-tools-minimal = %{version}-%{release}
+Recommends:     shim-x64 >= 15.8-1
+Conflicts:      shim < 15.8-1
 
 # Some distros split 'grub2' into more subpackages. For now we're bundling it all together
 # inside the default package and adding these 'Provides' to make installation more user-friendly
@@ -185,6 +188,8 @@ GRUB UEFI bootloader binaries
 Summary:        GRUB UEFI image with no prefix directory set
 Group:          System Environment/Base
 Requires:       %{name}-tools-minimal = %{version}-%{release}
+Recommends:     shim-x64 >= 15.8-1
+Conflicts:      shim < 15.8-1
 
 %description efi-binary-noprefix
 GRUB UEFI bootloader binaries with no prefix directory set
@@ -325,7 +330,7 @@ install -d %{buildroot}%{_datadir}/grub2-efi
 %endif
 
 # Install to efi directory
-EFI_BOOT_DIR=%{buildroot}/boot/efi/EFI/BOOT
+EFI_BOOT_DIR=%{buildroot}/boot/efi/EFI/%{efidir}
 GRUB_MODULE_NAME=
 GRUB_MODULE_SOURCE=
 
@@ -403,18 +408,18 @@ cp $GRUB_PXE_MODULE_SOURCE $EFI_BOOT_DIR/$GRUB_PXE_MODULE_NAME
 
 %files efi-binary
 %ifarch x86_64
-/boot/efi/EFI/BOOT/grubx64.efi
+/boot/efi/EFI/%{efidir}/grubx64.efi
 %endif
 %ifarch aarch64
-/boot/efi/EFI/BOOT/grubaa64.efi
+/boot/efi/EFI/%{efidir}/grubaa64.efi
 %endif
 
 %files efi-binary-noprefix
 %ifarch x86_64
-/boot/efi/EFI/BOOT/grubx64-noprefix.efi
+/boot/efi/EFI/%{efidir}/grubx64-noprefix.efi
 %endif
 %ifarch aarch64
-/boot/efi/EFI/BOOT/grubaa64-noprefix.efi
+/boot/efi/EFI/%{efidir}/grubaa64-noprefix.efi
 %endif
 
 %ifarch aarch64
@@ -440,6 +445,9 @@ cp $GRUB_PXE_MODULE_SOURCE $EFI_BOOT_DIR/$GRUB_PXE_MODULE_NAME
 %config(noreplace) %{_sysconfdir}/grub.d/41_custom
 
 %changelog
+* Wed Apr 17 2024 Dan Streetman <ddstreet@microsoft.com> - 2.06-19
+- move EFI binary from BOOT into efidir
+
 * Mon Apr 15 2024 Dan Streetman <ddstreet@microsoft.com> - 2.06-18
 - update grub to sbat 4
 
