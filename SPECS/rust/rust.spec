@@ -3,13 +3,13 @@
 
 # Release date and version of stage 0 compiler can be found in "src/stage0.json" inside the extracted "Source0".
 # Look for "date:" and "rustc:".
-%define release_date 2023-07-13
-%define stage0_version 1.71.0
+%define release_date 2024-05-02
+%define stage0_version 1.78.0
 
 Summary:        Rust Programming Language
 Name:           rust
-Version:        1.72.0
-Release:        7%{?dist}
+Version:        1.79.0
+Release:        1%{?dist}
 License:        (ASL 2.0 OR MIT) AND BSD AND CC-BY-3.0
 Vendor:         Microsoft Corporation
 Distribution:   Mariner
@@ -41,7 +41,8 @@ Source4:        https://static.rust-lang.org/dist/%{release_date}/rust-std-%{sta
 Source5:        https://static.rust-lang.org/dist/%{release_date}/cargo-%{stage0_version}-aarch64-unknown-linux-gnu.tar.xz
 Source6:        https://static.rust-lang.org/dist/%{release_date}/rustc-%{stage0_version}-aarch64-unknown-linux-gnu.tar.xz
 Source7:        https://static.rust-lang.org/dist/%{release_date}/rust-std-%{stage0_version}-aarch64-unknown-linux-gnu.tar.xz
-Patch0:         CVE-2023-45853.patch
+#Patch0:         CVE-2023-45853.patch
+Patch0:         fix-ui-test.patch
 BuildRequires:  binutils
 BuildRequires:  cmake
 # make sure rust relies on curl from CBL-Mariner (instead of using its vendored flavor)
@@ -120,8 +121,8 @@ USER=root SUDO_USER=root %make_build
 %check
 # We expect to generate dynamic CI contents in this folder, but it will fail since the .github folder is not included
 # with the published sources.
-mkdir -p .github/workflows
-./x.py run src/tools/expand-yaml-anchors
+#mkdir -p .github/workflows
+#./x.py run src/tools/expand-yaml-anchors
 
 ln -s %{_prefix}/src/mariner/BUILD/rustc-%{version}-src/build/x86_64-unknown-linux-gnu/stage2-tools-bin/rustfmt %{_prefix}/src/mariner/BUILD/rustc-%{version}-src/build/x86_64-unknown-linux-gnu/stage0/bin/
 ln -s %{_prefix}/src/mariner/BUILD/rustc-%{version}-src/vendor/ /root/vendor
@@ -131,11 +132,11 @@ rm -v ./tests/rustdoc-ui/issue-98690.*
 
 %install
 USER=root SUDO_USER=root %make_install
-mv %{buildroot}%{_docdir}/%{name}/LICENSE-THIRD-PARTY .
-rm %{buildroot}%{_docdir}/%{name}/{COPYRIGHT,LICENSE-APACHE,LICENSE-MIT}
-rm %{buildroot}%{_docdir}/%{name}/html/.lock
-rm %{buildroot}%{_docdir}/%{name}/*.old
-rm %{buildroot}%{_bindir}/*.old
+mv %{buildroot}%{_docdir}/cargo/LICENSE-THIRD-PARTY .
+rm %{buildroot}%{_docdir}/rustc/{COPYRIGHT,LICENSE-APACHE,LICENSE-MIT}
+rm -rf %{buildroot}%{_docdir}/docs/html/.lock
+rm -rf %{buildroot}%{_docdir}/%{name}c/*.old
+rm -rf %{buildroot}%{_bindir}/*.old
 
 %ldconfig_scriptlets
 
@@ -146,7 +147,6 @@ rm %{buildroot}%{_bindir}/*.old
 %{_bindir}/rust-lldb
 %{_libdir}/lib*.so
 %{_libdir}/rustlib/*
-%{_libexecdir}/cargo-credential-1password
 %{_libexecdir}/rust-analyzer-proc-macro-srv
 %{_bindir}/rust-gdb
 %{_bindir}/rust-gdbgui
@@ -160,14 +160,23 @@ rm %{buildroot}%{_bindir}/*.old
 
 %files doc
 %license LICENSE-APACHE LICENSE-MIT LICENSE-THIRD-PARTY COPYRIGHT
-%doc %{_docdir}/%{name}/html/*
-%doc %{_docdir}/%{name}/README.md
+%doc %{_docdir}/docs/html/*
+%doc %{_docdir}/rustc/README.md
+%doc %{_docdir}/cargo/*
+%doc %{_docdir}/clippy/*
+%doc %{_docdir}/rustfmt/*
 %doc CONTRIBUTING.md README.md RELEASES.md
 %doc src/tools/clippy/CHANGELOG.md
 %doc src/tools/rustfmt/Configurations.md
 %{_mandir}/man1/*
 
 %changelog
+* Thu Jun 13 2024 Muhammad Falak <mwani@microsoft.com> - 1.79.0-1
+- Fix installation files
+- Bump version to 1.79.0 
+- Drop Un-needed patch
+- Drop cargo-credential-1password binary
+
 * Mon May 06 2024 Rachel Menge <rachelmenge@microsoft.com> - 1.72.0-7
 - Bump release to rebuild against glibc 2.35-7
 
