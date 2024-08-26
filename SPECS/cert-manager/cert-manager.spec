@@ -1,7 +1,7 @@
 Summary:        Automatically provision and manage TLS certificates in Kubernetes
 Name:           cert-manager
-Version:        1.12.12
-Release:        2%{?dist}
+Version:        1.15.3
+Release:        1%{?dist}
 License:        ASL 2.0
 Vendor:         Microsoft Corporation
 Distribution:   Azure Linux
@@ -9,15 +9,15 @@ URL:            https://github.com/jetstack/cert-manager
 Source0:        https://github.com/jetstack/%{name}/archive/refs/tags/v%{version}.tar.gz#/%{name}-%{version}.tar.gz
 # Below is a manually created tarball, no download link.
 # We're using pre-populated GO dependencies from this tarball, since network is disabled during build time.
-# How to re-build this file:
-# 1. wget https://github.com/jetstack/%%{name}/archive/refs/tags/v%%{version}.tar.gz -O %%{name}-%%{version}.tar.gz
-# 2. <repo-root>/SPECS/cert-manager/generate_source_tarball.sh --srcTarball %%{name}-%%{version}.tar.gz --pkgVersion %%{version}
-Source1:        %{name}-%{version}-vendor.tar.gz
-Patch0:         CVE-2024-25620.patch
+#   1. wget https://github.com/jetstack/%%{name}/archive/refs/tags/v%%{version}.tar.gz -o ./SPECS/cert-manager/%%{name}-%%{version}.tar.gz
+#   2. tar -xf ./SPECS/cert-manager/%%{name}-%%{version}.tar.gz
+#   3. Run sudo .toolkit/scripts/nested-vendoring.sh -d ./SPECS/cert-manager -n cert-manager -v %%{version}
+#   4. should produce %{name}-%{version}-govendor.tar.gz
+Source1:        %{name}-%{version}-govendor.tar.gz
 BuildRequires:  golang
 Requires:       %{name}-acmesolver
 Requires:       %{name}-cainjector
-Requires:       %{name}-cmctl
+Requires:       %{name}-startupapicheck
 Requires:       %{name}-controller
 Requires:       %{name}-webhook
 
@@ -45,11 +45,11 @@ Summary:        cert-manager's controller binary
 cert-manager is a Kubernetes addon to automate the management and issuance of
 TLS certificates from various issuing sources.
 
-%package cmctl
-Summary:        cert-manager's cmctl binary
+%package startupapicheck
+Summary:        cert-manager's startupapicheck binary
 
-%description cmctl
-cmctl is a CLI tool manage and configure cert-manager resources for Kubernetes
+%description startupapicheck
+unknown
 
 %package webhook
 Summary:        cert-manager's webhook binary
@@ -63,20 +63,32 @@ Webhook component providing API validation, mutation and conversion functionalit
 
 
 %build
+pushd cmd/acmesolver
+go build -o ../../bin/acmesolver main.go
+popd
 
-LOCAL_BIN_DIR=$(realpath bin)
-go -C cmd/acmesolver build -mod=vendor -o "${LOCAL_BIN_DIR}"/acmesolver main.go
-go -C cmd/controller build -mod=vendor -o "${LOCAL_BIN_DIR}"/controller main.go
-go -C cmd/cainjector build -mod=vendor -o "${LOCAL_BIN_DIR}"/cainjector main.go
-go -C cmd/ctl build -mod=vendor -o "${LOCAL_BIN_DIR}"/cmctl main.go
-go -C cmd/webhook build -mod=vendor -o "${LOCAL_BIN_DIR}"/webhook main.go
+pushd cmd/cainjector
+go build -o ../../bin/cainjector main.go
+popd
+
+pushd cmd/controller
+go build -o ../../bin/controller main.go
+popd
+
+pushd cmd/startupapicheck
+go build -o ../../bin/startupapicheck main.go
+popd
+
+pushd cmd/webhook
+go build -o ../../bin/webhook main.go
+popd
 
 %install
 mkdir -p %{buildroot}%{_bindir}
 install -D -m0755 bin/acmesolver %{buildroot}%{_bindir}/
 install -D -m0755 bin/cainjector %{buildroot}%{_bindir}/
 install -D -m0755 bin/controller %{buildroot}%{_bindir}/
-install -D -m0755 bin/cmctl %{buildroot}%{_bindir}/
+install -D -m0755 bin/startupapicheck %{buildroot}%{_bindir}/
 install -D -m0755 bin/webhook %{buildroot}%{_bindir}/
 %files
 
@@ -95,10 +107,10 @@ install -D -m0755 bin/webhook %{buildroot}%{_bindir}/
 %doc README.md
 %{_bindir}/controller
 
-%files cmctl
+%files startupapicheck
 %license LICENSE LICENSES
 %doc README.md
-%{_bindir}/cmctl
+%{_bindir}/startupapicheck
 
 %files webhook
 %license LICENSE LICENSES
@@ -106,6 +118,9 @@ install -D -m0755 bin/webhook %{buildroot}%{_bindir}/
 %{_bindir}/webhook
 
 %changelog
+* Thu Aug 22 2024 Cameron Baird <cameronbaird@microsoft.com> - 1.15.3-1
+- Upgrade to 1.15.3 to address CVE-2023-45142, CVE-2023-6337
+
 * Wed Aug 07 2024 Bhagyashri Pathak <bhapathak@microsoft.com> - 1.12.12-2
 - Patch for CVE-2024-25620
 
