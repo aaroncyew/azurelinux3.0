@@ -4,7 +4,7 @@
 Summary:        The Kerberos newtork authentication system
 Name:           krb5
 Version:        1.21.3
-Release:        2%{?dist}
+Release:        3%{?dist}
 License:        MIT
 Vendor:         Microsoft Corporation
 Distribution:   Mariner
@@ -55,6 +55,7 @@ autoconf &&
     --localstatedir=%{_sharedstatedir} \
     --with-system-et         \
     --with-system-ss         \
+    --with-ldap              \
     --with-system-verto=no   \
     --enable-dns-for-realm   \
     --enable-pkinit          \
@@ -126,6 +127,9 @@ make check
 %{_datarootdir}/locale/*
 
 %changelog
+* Thu Sep 12 2024 Andy Zaugg <azaugg@linkedin.com> - 1.21.3-3
+- Compile with ldap module backend
+
 * Mon Sep 2 2024 Ankita Pareek <ankitapareek@microsoft.com> - 1.21.3-2
 - Add patch for CVE-2024-26458 and CVE-2024-26461
 
