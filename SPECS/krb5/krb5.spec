@@ -4,7 +4,7 @@
 Summary:        The Kerberos newtork authentication system
 Name:           krb5
 Version:        1.21.3
-Release:        2%{?dist}
+Release:        1%{?dist}
 License:        MIT
 Vendor:         Microsoft Corporation
 Distribution:   Azure Linux

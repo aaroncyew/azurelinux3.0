@@ -1,7 +1,7 @@
 %define         underscore_version %(echo %{version} | cut -d. -f1-3 --output-delimiter="_")
 Summary:        An XML parser library
 Name:           expat
-Version:        2.6.3
+Version:        2.6.2
 Release:        1%{?dist}
 License:        MIT
 Vendor:         Microsoft Corporation

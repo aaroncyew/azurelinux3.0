@@ -3,7 +3,7 @@
 
 Summary:        dnf equivalent using C libs
 Name:           tdnf
-Version:        3.5.8
+Version:        3.5.6
 Release:        2%{?dist}
 License:        LGPLv2.1 AND GPLv2
 Vendor:         Microsoft Corporation

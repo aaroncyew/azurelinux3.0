@@ -1,7 +1,7 @@
 Summary:        Docbook-xsl-1.79.1
 Name:           docbook-style-xsl
 Version:        1.79.1
-Release:        14%{?dist}
+Release:        13%{?dist}
 License:        ASL 2.0 AND MIT
 Vendor:         Microsoft Corporation
 Distribution:   Azure Linux
