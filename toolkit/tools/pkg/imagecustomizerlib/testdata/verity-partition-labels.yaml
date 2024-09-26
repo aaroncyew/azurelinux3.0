@@ -14,10 +14,12 @@ storage:
       end: 1024M
 
     - id: root
+      label: root
       start: 1024M
       end: 3072M
 
-    - id: roothash
+    - id: verityhash
+      label: root-hash
       start: 3072M
       end: 3200M
 
@@ -41,7 +43,7 @@ storage:
     mountPoint:
       path: /
       
-  - deviceId: roothash
+  - deviceId: verityhash
     type: fat32
 
   - deviceId: var
@@ -66,11 +68,11 @@ os:
   verity:
     corruptionOption: panic
     dataPartition:
-      idType: id
+      idType: part-label
       id: root
     hashPartition:
-      idType: id
-      id: roothash
+      idType: part-label
+      id: root-hash
 
   additionalFiles:
     # Change the directory that the sshd-keygen service writes the SSH host keys to.
@@ -89,10 +91,6 @@ os:
   - name: test
     sshPublicKeys:
       # Your SSH public key here.
-    - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHmxDqCGrJgsxejRX1GEzcW2d5an2GMOuZkcZFrm9mXb chris@chrisgun-fed2
-    password:
-      type: plain-text
-      value: hello
     secondaryGroups:
     - sudo
 
