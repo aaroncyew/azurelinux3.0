@@ -5,7 +5,7 @@
 %define kernelver %{version}-%{release}
 Summary:        Signed Unified Kernel Image for %{buildarch} systems
 Name:           kernel-uki-signed-%{buildarch}
-Version:        6.6.51.1
+Version:        6.6.47.1
 Release:        1%{?dist}
 License:        GPLv2
 Vendor:         Microsoft Corporation

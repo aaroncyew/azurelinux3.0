@@ -17,7 +17,7 @@
 
 Summary:        Unified Kernel Image
 Name:           kernel-uki
-Version:        6.6.51.1
+Version:        6.6.47.1
 Release:        1%{?dist}
 License:        GPLv2
 Vendor:         Microsoft Corporation
